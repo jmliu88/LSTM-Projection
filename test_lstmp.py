@@ -10,6 +10,7 @@ import numpy as np
 import lasagne
 from mock import Mock
 
+# LSTMP has one more parameter W_hid_projection than LSTM.
 def test_lstmp_return_shape():
     num_batch, seq_len, n_features1, n_features2 = 5, 3, 10, 11
     num_units = 6
@@ -42,7 +43,7 @@ def test_lstmp_nparams_no_peepholes():
 
     # 3*n_gates
     # the 3 is because we have  hid_to_gate, in_to_gate and bias for each gate
-    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 12
+    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 13
 
     # bias params + init params
     assert len(lasagne.layers.get_all_params(l_lstmp, regularizable=False)) == 6
@@ -54,7 +55,7 @@ def test_lstmp_nparams_peepholes():
 
     # 3*n_gates + peepholes(3).
     # the 3 is because we have  hid_to_gate, in_to_gate and bias for each gate
-    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 15
+    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 16
 
     # bias params(4) + init params(2)
     assert len(lasagne.layers.get_all_params(l_lstmp, regularizable=False)) == 6
@@ -66,7 +67,7 @@ def test_lstmp_nparams_learn_init():
 
     # 3*n_gates + inits(2).
     # the 3 is because we have  hid_to_gate, in_to_gate and bias for each gate
-    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 14
+    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 15
 
     # bias params(4) + init params(2)
     assert len(lasagne.layers.get_all_params(l_lstmp, regularizable=False)) == 6
@@ -102,7 +103,7 @@ def test_lstmp_nparams_hid_init_layer():
     # 3*n_gates + 4
     # the 3 is because we have  hid_to_gate, in_to_gate and bias for each gate
     # 4 is for the W and b parameters in the two DenseLayer layers
-    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 19
+    assert len(lasagne.layers.get_all_params(l_lstmp, trainable=True)) == 20
 
     # GRU bias params(3) + Dense bias params(1) * 2
     assert len(lasagne.layers.get_all_params(l_lstmp, regularizable=False)) == 6
@@ -309,7 +310,8 @@ def test_lstmp_unroll_scan_bck():
 
 
 def test_lstmp_passthrough():
-    # Tests that the LSTM can simply pass through its input
+    # Tests that the LSTMP can simply pass through its input
+    # TODO: adjust this function to fit LSTMP
     l_in = InputLayer((4, 5, 6))
     zero = lasagne.init.Constant(0.)
     one = lasagne.init.Constant(1.)
@@ -318,7 +320,7 @@ def test_lstmp_passthrough():
     in_pass_gate = Gate(
         np.eye(6).astype(theano.config.floatX), zero, zero, zero, None)
     l_rec = LSTMPLayer(
-        l_in, 6, pass_gate, no_gate, in_pass_gate, pass_gate, None)
+        l_in, 6, 6, pass_gate, no_gate, in_pass_gate, pass_gate, None)
     out = lasagne.layers.get_output(l_rec)
     inp = np.arange(4*5*6).reshape(4, 5, 6).astype(theano.config.floatX)
     np.testing.assert_almost_equal(out.eval({l_in.input_var: inp}), inp)
