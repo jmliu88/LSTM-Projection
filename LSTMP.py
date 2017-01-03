@@ -334,6 +334,9 @@ class LSTMPLayer(LSTMLayer):
         if not self.precompute_input:
             non_seqs += [W_in_stacked, b_stacked]
 
+        # At last, add projection matrix to non_seqs
+        non_seqs += [self.W_hid_projection]
+        
         if self.unroll_scan:
             # Retrieve the dimensionality of the incoming layer
             input_shape = self.input_shapes[0]
