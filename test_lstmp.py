@@ -309,18 +309,26 @@ def test_lstmp_unroll_scan_bck():
     np.testing.assert_almost_equal(output_scan_val, output_unrolled_val)
 
 
+class Identity(lasagne.init.Initializer):
+    def __init__(self):
+        pass
+    def sample(self,shape):
+        if shape[0] != shape[1]:
+            raise RuntimeError('Only squared shape is allowed.')
+        return lasagne.init.floatX(np.identity(shape[0]))
+
 def test_lstmp_passthrough():
     # Tests that the LSTMP can simply pass through its input
-    # TODO: adjust this function to fit LSTMP
     l_in = InputLayer((4, 5, 6))
     zero = lasagne.init.Constant(0.)
     one = lasagne.init.Constant(1.)
+    identity_mat = Identity()
     pass_gate = Gate(zero, zero, zero, one, None)
     no_gate = Gate(zero, zero, zero, zero, None)
     in_pass_gate = Gate(
         np.eye(6).astype(theano.config.floatX), zero, zero, zero, None)
     l_rec = LSTMPLayer(
-        l_in, 6, 6, pass_gate, no_gate, in_pass_gate, pass_gate, None)
+        l_in, 6, 6, identity_mat,  pass_gate, no_gate, in_pass_gate, pass_gate, None)
     out = lasagne.layers.get_output(l_rec)
     inp = np.arange(4*5*6).reshape(4, 5, 6).astype(theano.config.floatX)
     np.testing.assert_almost_equal(out.eval({l_in.input_var: inp}), inp)
